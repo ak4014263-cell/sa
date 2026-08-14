@@ -223,17 +223,15 @@ async function executeSingleApplication(job, profile, applicationId) {
     // ── STEP 5: Inject Personalized Cover Letter ──
     emitStatus(applicationId, 5, 'inject_letter', 'active', `Injecting custom cover letter for ${job.company}...`);
     
-    await page.evaluate((letter) => {
-      const ta = document.querySelector('textarea[name*="letter"], textarea[name*="motivation"], textarea');
+    try {
+      const ta = await page.$('textarea');
       if (ta) {
-        ta.value = letter;
-        ta.dispatchEvent(new Event('input', { bubbles: true }));
-        return true;
+        const letterText = profile.coverLetter || "Madame, Monsieur,\n\nVivement intéressé par votre opportunité, je souhaite mettre à profit mes compétences techniques au sein de votre équipe.\n\nCordialement,\nFahid El Garouani";
+        await ta.type(letterText, { delay: 10 });
       }
-      return false;
-    }, profile.coverLetter || "Madame, Monsieur,\n\nVivement intéressé par votre opportunité, je souhaite mettre à profit mes compétences en développement logiciel Full Stack au sein de votre équipe.\n\nCordialement,\nFahid El Garouani");
+    } catch (e) {}
 
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 1000));
 
     let screenshot5 = path.join(screenshotDir, `${applicationId}_step5_letter.png`);
     await page.screenshot({ path: screenshot5 }).catch(() => {});
