@@ -221,7 +221,19 @@ def get_profile():
 def get_jobs():
     query = request.args.get("query", "développeur")
     location = request.args.get("location", "Paris")
-    jobs = scrape_wttj_jobs(query=query, location=location, limit=40)
+    
+    # Fast instant load from live cache
+    cache_path = BASE_DIR / "public" / "live_jobs.json"
+    if cache_path.exists():
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                cached_jobs = json.load(f)
+            if cached_jobs:
+                return jsonify({"success": True, "jobs": cached_jobs, "total": len(cached_jobs)})
+        except Exception:
+            pass
+
+    jobs = scrape_wttj_jobs(query=query, location=location, limit=40) or []
     return jsonify({"success": True, "jobs": jobs, "total": len(jobs)})
 
 
