@@ -334,11 +334,13 @@ async function handleApplyAction(job) {
 function handleApplicationUpdate(data) {
   const appId = data.applicationId;
   if (!applications[appId]) {
-    applications[appId] = { applicationId: appId, job: {}, steps: [], status: 'active' };
+    applications[appId] = { applicationId: appId, job: data.job || {}, steps: [], status: 'active', currentStep: 1 };
   }
 
   const app = applications[appId];
-  app.status = data.status || app.status;
+  if (data.job) app.job = data.job;
+  if (data.status) app.status = data.status;
+  if (data.stepNumber) app.currentStep = data.stepNumber;
 
   // Update Right Panel Applications Table
   renderWttjApplications();
