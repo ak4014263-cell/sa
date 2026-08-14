@@ -133,19 +133,21 @@ is_worker_running = True
 
 def background_apply_worker():
     with sync_playwright() as p:
-        browser = p.chromium.launch_persistent_context(
-            user_data_dir=str(SESSION_DIR),
+        browser = p.chromium.launch(
             headless=True,
-            viewport={"width": 1280, "height": 1000},
             args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled"]
+        )
+        context = browser.new_context(
+            viewport={"width": 1280, "height": 1000},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
         )
 
         try:
-            ensure_authenticated_session(browser, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+            ensure_authenticated_session(context)
         except Exception as e:
             print(f"[Worker Auth Notice] {e}")
 
-        page = browser.new_page()
+        page = context.new_page()
 
         while is_worker_running:
             try:
