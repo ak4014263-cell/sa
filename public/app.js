@@ -66,6 +66,14 @@ function handleSSEEvent(data) {
     showToast(data.message || 'Profil candidat synchronisé ✓', 'success');
   } else if (data.type === 'application_update') {
     handleApplicationUpdate(data);
+  } else if (data.type === 'autopilot_started') {
+    setAutoPilotUI(true, data.total);
+    showToast(`🚀 Auto-Pilot démarré : ${data.total} candidatures`, 'success');
+  } else if (data.type === 'autopilot_progress') {
+    handleAutoPilotProgress(data);
+  } else if (data.type === 'autopilot_stopped' || data.type === 'autopilot_finished') {
+    setAutoPilotUI(false);
+    showToast(data.message || 'Auto-Pilot terminé', 'info');
   }
 }
 
@@ -703,4 +711,83 @@ function toggleLayoutMode() {
   } else {
     container.style.gridTemplateColumns = '1fr';
   }
+}
+
+// ── FULL AUTOMATION: AUTO-PILOT MODE ──
+let isAutoPilotActive = false;
+
+async function toggleAutoPilot() {
+  const btn = document.getElementById('btn-toggle-autopilot');
+  
+  if (isAutoPilotActive) {
+    // Stop Auto-Pilot
+    try {
+      await fetch(`${API}/autopilot/stop`, { method: 'POST' });
+      setAutoPilotUI(false);
+      showToast('⏸️ Auto-Pilot mis en pause', 'info');
+    } catch (e) {}
+  } else {
+    // Start Auto-Pilot
+    const jobsToApply = filteredJobs.slice(currentJobIndex, currentJobIndex + 25);
+    if (jobsToApply.length === 0) {
+      showToast('Aucune offre restante à traiter', 'warning');
+      return;
+    }
+
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${API}/autopilot/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobs: jobsToApply, limit: 25 })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAutoPilotUI(true, jobsToApply.length);
+      } else {
+        showToast(data.error || 'Impossible de démarrer l\'auto-pilot', 'error');
+      }
+    } catch (err) {
+      showToast('Erreur serveur auto-pilot', 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+}
+
+function setAutoPilotUI(isActive, total = 0) {
+  isAutoPilotActive = isActive;
+  const btn = document.getElementById('btn-toggle-autopilot');
+  const statusText = document.getElementById('autopilot-status-text');
+
+  if (isActive) {
+    btn.className = 'btn-autopilot running';
+    btn.innerHTML = '<span>⏸️ Arrêter l\'Auto-Pilot</span>';
+    statusText.innerHTML = `<strong>🟢 En cours d'exécution :</strong> Traitement de ${total} candidatures en boucle...`;
+  } else {
+    btn.className = 'btn-autopilot';
+    btn.innerHTML = '<span>▶ Démarrer l\'Auto-Pilot (Full Auto)</span>';
+    statusText.textContent = 'Postule automatiquement à toutes les offres WTTJ en boucle';
+  }
+}
+
+function handleAutoPilotProgress(data) {
+  document.getElementById('stat-applied-count').textContent = data.index;
+  document.getElementById('autopilot-status-text').innerHTML = 
+    `<strong>⚡ Envoi ${data.index}/${data.total} :</strong> ${data.job?.title} @ ${data.job?.company}`;
+
+  // Automatically advance card deck with animation
+  const card = activeCardElement;
+  if (card) {
+    card.style.transition = 'transform 0.4s ease-out, opacity 0.3s ease';
+    card.style.transform = 'translateX(600px) rotate(30deg)';
+    card.style.opacity = 0;
+  }
+
+  currentJobIndex++;
+  setTimeout(() => {
+    renderCardDeck();
+  }, 300);
+
+  addTerminalLog(`[AutoPilot ${data.index}/${data.total}] ${data.job?.title} @ ${data.job?.company} -> Transmis ✓`, 'success');
 }

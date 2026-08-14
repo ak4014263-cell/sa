@@ -259,6 +259,92 @@ app.post('/api/apply', async (req, res) => {
   });
 });
 
+// ── Full Automation Auto-Pilot Engine ──
+let autopilotRunning = false;
+
+app.post('/api/autopilot/start', async (req, res) => {
+  const { jobs, limit = 25, delayMs = 3500 } = req.body;
+  const targetJobs = (jobs && jobs.length > 0) ? jobs.slice(0, limit) : cachedJobs.slice(0, limit);
+
+  if (targetJobs.length === 0) {
+    return res.status(400).json({ success: false, error: 'Aucune offre disponible pour l\'auto-pilot' });
+  }
+
+  autopilotRunning = true;
+  console.log(`[AutoPilot] Started full automation batch of ${targetJobs.length} applications!`);
+
+  broadcastEvent({
+    type: 'autopilot_started',
+    total: targetJobs.length,
+    message: `Mode Auto-Pilot activé : ${targetJobs.length} candidatures en cours...`
+  });
+
+  // Run in background sequentially
+  (async () => {
+    for (let i = 0; i < targetJobs.length; i++) {
+      if (!autopilotRunning) {
+        console.log('[AutoPilot] Stopped by user.');
+        broadcastEvent({ type: 'autopilot_stopped', processed: i });
+        break;
+      }
+
+      const job = targetJobs[i];
+      const applicationId = uuidv4().slice(0, 8);
+
+      const applicationRecord = {
+        applicationId,
+        job,
+        profile: { ...profile },
+        status: 'active',
+        currentStep: 1,
+        steps: [],
+        latestScreenshot: null,
+        createdAt: new Date().toISOString()
+      };
+
+      applications[applicationId] = applicationRecord;
+
+      broadcastEvent({
+        type: 'autopilot_progress',
+        index: i + 1,
+        total: targetJobs.length,
+        job,
+        applicationId,
+        message: `[AutoPilot ${i + 1}/${targetJobs.length}] Envoi pour ${job.title} @ ${job.company}`
+      });
+
+      try {
+        await autoApply(job, profile, applicationId);
+      } catch (err) {
+        console.error(`[AutoPilot] Error on job ${i + 1}:`, err.message);
+      }
+
+      // Random natural human delay between applications (e.g. 3-5 seconds)
+      const randomDelay = delayMs + Math.floor(Math.random() * 1500);
+      await new Promise(r => setTimeout(r, randomDelay));
+    }
+
+    autopilotRunning = false;
+    broadcastEvent({
+      type: 'autopilot_finished',
+      message: `🎉 Auto-Pilot terminé ! Toutes les candidatures ont été transmises à Welcome to the Jungle.`
+    });
+  })();
+
+  res.json({
+    success: true,
+    message: `Auto-Pilot démarré avec succès pour ${targetJobs.length} offres`,
+    total: targetJobs.length
+  });
+});
+
+app.post('/api/autopilot/stop', (req, res) => {
+  autopilotRunning = false;
+  console.log('[AutoPilot] Stop command received.');
+  broadcastEvent({ type: 'autopilot_stopped', message: 'Auto-Pilot mis en pause' });
+  res.json({ success: true, message: 'Auto-Pilot arrêté' });
+});
+
 // GET /api/applications
 app.get('/api/applications', (req, res) => {
   res.json({
@@ -271,5 +357,6 @@ app.get('/api/applications', (req, res) => {
 app.listen(PORT, () => {
   console.log(`\n🚀 JobSwipe Dual-Platform MVP running at http://localhost:${PORT}`);
   console.log(`🟢 Synchronized Candidate Space active`);
+  console.log(`🤖 Full Automation Auto-Pilot ready`);
   console.log(`📋 API endpoints ready`);
 });
