@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JobSwipe × Welcome to the Jungle — Dual Platform Auto-Apply</title>
+  <meta name="description" content="Plateforme Dual-Screen : JobSwipe Tinder pour l'emploi synchronisé en temps réel avec Welcome to the Jungle." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <!-- ── GLOBAL TOP SYNC BAR ── -->
+  <header class="global-header">
+    <div class="header-brand">
+      <div class="logo-badge">⚡</div>
+      <div>
+        <h1 class="logo-title">JobSwipe <span class="badge-pro">DUAL MVP</span></h1>
+        <p class="logo-sub">Tinder Auto-Apply × Welcome to the Jungle Mirror</p>
+      </div>
+    </div>
+
+    <!-- Live Sync Bridge Status -->
+    <div class="sync-bridge" id="sync-bridge">
+      <div class="sync-dot pulse"></div>
+      <div class="sync-info">
+        <span class="sync-label">Synchronisation WTTJ :</span>
+        <strong id="sync-email-display" class="sync-email">daddy202028@gmail.com</strong>
+      </div>
+      <div class="sync-badge">Identifiants Liés ✓</div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <button class="btn-secondary btn-sm" onclick="openAuthModal('login')">
+        <span>🔑 Connexion</span>
+      </button>
+      <button class="btn-primary btn-sm" onclick="openAuthModal('register')">
+        <span>✨ 3-Step Setup</span>
+      </button>
+      <button class="btn-icon" onclick="toggleLayoutMode()" title="Basculer vue split / single" id="btn-layout-toggle">
+        ⚏
+      </button>
+    </div>
+  </header>
+
+  <!-- ── MAIN DUAL-PLATFORM WRAPPER ── -->
+  <main class="dual-container">
+
+    <!-- ═════════════════════════════════════════════════════════
+         LEFT PANEL : JOBSWIPE AUTO-APPLY PLATFORM
+         ═════════════════════════════════════════════════════════ -->
+    <section class="platform-panel panel-jobswipe" id="panel-jobswipe">
+      
+      <!-- Panel Header & Quick Stats -->
+      <div class="panel-header">
+        <div class="panel-tag tag-jobswipe">
+          <span class="dot-live"></span>
+          <span>JobSwipe Engine</span>
+        </div>
+        <div class="panel-stats">
+          <div class="stat-pill"><span id="stat-applied-count">0</span> Postulés</div>
+          <div class="stat-pill"><span id="stat-remaining-count">0</span> Restants</div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-strip">
+        <span class="filter-chip active" onclick="filterJobs('all')">🔥 Toutes les offres</span>
+        <span class="filter-chip" onclick="filterJobs('remote')">🏠 Full Remote</span>
+        <span class="filter-chip" onclick="filterJobs('paris')">📍 Paris & IDF</span>
+        <span class="filter-chip" onclick="filterJobs('react')">⚛️ React / Node</span>
+      </div>
+
+      <!-- Tinder Card Stack Area -->
+      <div class="swipe-stage">
+        <div class="cards-deck" id="cards-deck">
+          <!-- Dynamically filled by app.js -->
+          <div class="deck-loader">
+            <div class="spinner-large"></div>
+            <p>Chargement des offres Welcome to the Jungle...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons Bar -->
+      <div class="action-dock">
+        <button class="btn-action btn-pass" onclick="triggerSwipe('left')" title="Passer (Swipe Gauche)">
+          <span class="action-icon">✕</span>
+          <span class="action-key">← Touche Gauche</span>
+        </button>
+
+        <button class="btn-action btn-star" onclick="triggerSaveJob()" title="Sauvegarder l'offre">
+          <span class="action-icon">★</span>
+        </button>
+
+        <button class="btn-action btn-apply" onclick="triggerSwipe('right')" title="Postuler automatiquement (Swipe Droit)">
+          <span class="action-icon">⚡</span>
+          <span class="action-key">Touche Droite →</span>
+        </button>
+      </div>
+
+      <!-- Quick Hint -->
+      <div class="swipe-hint">
+        Glissez la carte vers la <strong>droite</strong> ou cliquez sur <strong>⚡ Auto-Apply</strong> pour lancer le pipeline en 7 étapes.
+      </div>
+    </section>
+
+
+    <!-- ═════════════════════════════════════════════════════════
+         RIGHT PANEL : WELCOME TO THE JUNGLE CANDIDATE MIRROR
+         ═════════════════════════════════════════════════════════ -->
+    <section class="platform-panel panel-wttj" id="panel-wttj">
+      
+      <!-- WTTJ Authentic Header -->
+      <div class="wttj-top-bar">
+        <div class="wttj-brand">
+          <div class="wttj-logo-icon">W</div>
+          <div>
+            <h2 class="wttj-title">welcome to the jungle</h2>
+            <p class="wttj-sub">Espace Candidat Synchronisé (Mirror Live)</p>
+          </div>
+        </div>
+        <div class="wttj-account-status">
+          <span class="wttj-status-badge">🟢 Connecté</span>
+        </div>
+      </div>
+
+      <!-- WTTJ Candidate Profile Banner -->
+      <div class="wttj-profile-card">
+        <div class="wttj-avatar-box">
+          <div class="wttj-avatar" id="wttj-avatar-initials">AD</div>
+        </div>
+        <div class="wttj-profile-details">
+          <div class="wttj-name-row">
+            <h3 id="wttj-name-display">Alexandre Dubois</h3>
+            <span class="badge-verified" title="Compte synchronisé avec JobSwipe">✓ Vérifié</span>
+          </div>
+          <p class="wttj-headline" id="wttj-title-display">Développeur Full Stack Senior</p>
+          <div class="wttj-meta-chips">
+            <span class="meta-item" id="wttj-phone-display">📱 +33 6 12 34 56 78</span>
+            <span class="meta-item" id="wttj-cv-display">📄 CV_Alexandre_Dubois.pdf</span>
+            <span class="meta-item" id="wttj-avail-display">⏱️ Immédiate</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Selection in WTTJ Space -->
+      <div class="wttj-nav-tabs">
+        <button class="wttj-tab active" onclick="switchWttjTab('candidatures')" id="wttj-tab-btn-candidatures">
+          Mes Candidatures (<span id="wttj-apps-count">0</span>)
+        </button>
+        <button class="wttj-tab" onclick="switchWttjTab('bot')" id="wttj-tab-btn-bot">
+          Bot Terminal Live (<span id="wttj-live-bot-tag">Actif</span>)
+        </button>
+        <button class="wttj-tab" onclick="switchWttjTab('documents')" id="wttj-tab-btn-documents">
+          Mes Documents
+        </button>
+      </div>
+
+      <!-- Subview 1: Applications Table -->
+      <div class="wttj-tab-content active" id="wttj-view-candidatures">
+        <div class="table-header-bar">
+          <span class="col-title">Offre & Entreprise</span>
+          <span class="col-status">Statut WTTJ</span>
+          <span class="col-action">Détails</span>
+        </div>
+        <div class="wttj-applications-list" id="wttj-applications-list">
+          <!-- Dynamically populated -->
+          <div class="empty-wttj-state">
+            <div class="empty-icon">📂</div>
+            <h4>Aucune candidature pour le moment</h4>
+            <p>Swiper à droite sur JobSwipe pour postuler automatiquement sur Welcome to the Jungle.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subview 2: Bot Live Terminal -->
+      <div class="wttj-tab-content" id="wttj-view-bot">
+        <div class="bot-terminal-box">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot-red"></span>
+              <span class="dot-yellow"></span>
+              <span class="dot-green"></span>
+            </div>
+            <span class="terminal-title">WTTJ Automation Pipeline (7 Steps Active)</span>
+          </div>
+          <div class="terminal-feed" id="terminal-feed">
+            <div class="log-line info">[System] WTTJ Synchronizer initialized. Listening for swipe events...</div>
+            <div class="log-line success">[Sync] Candidate credentials securely linked.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subview 3: Candidate Documents -->
+      <div class="wttj-tab-content" id="wttj-view-documents">
+        <div class="wttj-docs-card">
+          <div class="doc-row">
+            <div class="doc-icon">📄</div>
+            <div class="doc-info">
+              <strong id="wttj-doc-name">CV_Alexandre_Dubois.pdf</strong>
+              <span>Format PDF · Associé aux candidatures automatiques</span>
+            </div>
+            <button class="btn-outline-sm" onclick="openAuthModal('register')">Remplacer</button>
+          </div>
+          <div class="cover-letter-preview-box">
+            <label>Lettre de motivation par défaut :</label>
+            <p id="wttj-letter-preview">Madame, Monsieur, vivement intéressé par vos projets...</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- ═════════════════════════════════════════════════════════
+       3-STEP CANDIDATE ONBOARDING & SETUP MODAL
+       ═════════════════════════════════════════════════════════ -->
+  <div class="modal-backdrop" id="modal-auth">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeAuthModal()">✕</button>
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-logo">⚡</div>
+        <h3 id="modal-title">Configuration Candidat (3 Étapes)</h3>
+        <p id="modal-subtitle">Configurez votre profil synchronisé pour postuler en 1 clic sur Welcome to the Jungle.</p>
+      </div>
+
+      <!-- Mode Switch (3-Step Setup vs Quick Login) -->
+      <div class="mode-switch">
+        <button class="mode-btn active" id="btn-mode-register" onclick="setAuthMode('register')">✨ 3-Step Setup</button>
+        <button class="mode-btn" id="btn-mode-login" onclick="setAuthMode('login')">🔑 Connexion Rapide</button>
+      </div>
+
+      <!-- Step Progress Bar (For 3-Step Mode) -->
+      <div class="stepper-bar" id="stepper-bar">
+        <div class="step-indicator active" id="step-ind-1">
+          <span class="step-num">1</span>
+          <span class="step-text">Identifiants</span>
+        </div>
+        <div class="step-line" id="step-line-1"></div>
+        <div class="step-indicator" id="step-ind-2">
+          <span class="step-num">2</span>
+          <span class="step-text">Profil</span>
+        </div>
+        <div class="step-line" id="step-line-2"></div>
+        <div class="step-indicator" id="step-ind-3">
+          <span class="step-num">3</span>
+          <span class="step-text">CV & Lettre</span>
+        </div>
+      </div>
+
+      <!-- ── FORM CONTAINER ── -->
+      <form id="form-onboarding" onsubmit="handleOnboardingSubmit(event)">
+
+        <!-- STEP 1: CREDENTIALS -->
+        <div class="form-step active" id="form-step-1">
+          <div class="form-group">
+            <label for="input-email">Adresse Email WTTJ *</label>
+            <input type="email" id="input-email" required placeholder="nom.prenom@email.com" value="daddy202028@gmail.com" />
+            <span class="field-hint">Utilisée pour synchroniser votre compte sur les deux plateformes.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="input-password">Mot de passe WTTJ *</label>
+            <input type="password" id="input-password" required minlength="8" placeholder="Minimum 8 caractères" value="JobSwipeDemo2026!" />
+            <div class="password-strength">
+              <div class="strength-meter" id="strength-meter"></div>
+            </div>
+          </div>
+
+          <div class="modal-footer-nav">
+            <div></div>
+            <button type="button" class="btn-primary" onclick="goToStep(2)">
+              Suivant : Profil Candidat →
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 2: PROFILE DETAILS -->
+        <div class="form-step" id="form-step-2">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="input-firstname">Prénom *</label>
+              <input type="text" id="input-firstname" required placeholder="Alexandre" value="Alexandre" />
+            </div>
+            <div class="form-group">
+              <label for="input-lastname">Nom *</label>
+              <input type="text" id="input-lastname" required placeholder="Dubois" value="Dubois" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="input-phone">Téléphone *</label>
+              <input type="tel" id="input-phone" required placeholder="+33 6 12 34 56 78" value="+33 6 12 34 56 78" />
+            </div>
+            <div class="form-group">
+              <label for="input-availability">Disponibilité</label>
+              <select id="input-availability">
+                <option value="Immédiate" selected>Immédiate</option>
+                <option value="1 mois">1 mois</option>
+                <option value="3 mois (Préavis)">3 mois (Préavis)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="input-title">Titre du poste recherché *</label>
+            <input type="text" id="input-title" required placeholder="Développeur Full Stack Senior" value="Développeur Full Stack Senior" />
+          </div>
+
+          <div class="form-group">
+            <label for="input-linkedin">Lien Profil LinkedIn</label>
+            <input type="url" id="input-linkedin" placeholder="https://linkedin.com/in/alexandre-dubois" value="https://linkedin.com/in/alexandre-dubois" />
+          </div>
+
+          <div class="modal-footer-nav">
+            <button type="button" class="btn-secondary" onclick="goToStep(1)">← Précédent</button>
+            <button type="button" class="btn-primary" onclick="goToStep(3)">Suivant : CV & Documents →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: APPLICATION DOCUMENTS (CV & LETTER) -->
+        <div class="form-step" id="form-step-3">
+          
+          <div class="form-group">
+            <label>Votre CV (Format PDF)</label>
+            <div class="file-dropzone" id="cv-dropzone" onclick="document.getElementById('file-cv-input').click()">
+              <input type="file" id="file-cv-input" accept=".pdf,.doc,.docx" style="display:none" onchange="handleCvFileSelect(event)" />
+              <div class="dropzone-icon">📁</div>
+              <div class="dropzone-text">
+                <strong id="dropzone-filename">CV_Alexandre_Dubois.pdf</strong>
+                <span>Glissez votre CV ou cliquez pour téléverser</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="input-coverletter">Modèle de lettre de motivation par défaut</label>
+            <textarea id="input-coverletter" rows="4" placeholder="Madame, Monsieur, vivement intéressé par vos opportunités...">Madame, Monsieur,
+
+Vivement intéressé par vos projets innovants et votre culture d'entreprise, je souhaite mettre à profit mes compétences techniques au sein de votre équipe.
+
+Restant à votre disposition pour un échange,
+Alexandre Dubois</textarea>
+          </div>
+
+          <div class="modal-footer-nav">
+            <button type="button" class="btn-secondary" onclick="goToStep(2)">← Précédent</button>
+            <button type="submit" class="btn-primary btn-sparkle" id="btn-save-onboarding">
+              <span>🚀 Enregistrer & Synchroniser</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- QUICK LOGIN FORM (Alternate View) -->
+        <div class="form-step" id="form-step-login" style="display:none;">
+          <div class="form-group">
+            <label for="login-email">Email Welcome to the Jungle</label>
+            <input type="email" id="login-email" placeholder="votre.email@domaine.com" value="daddy202028@gmail.com" />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Mot de passe</label>
+            <input type="password" id="login-password" placeholder="••••••••" value="JobSwipeDemo2026!" />
+          </div>
+          <button type="button" class="btn-primary btn-block" onclick="handleQuickLogin()">
+            Se connecter & Synchroniser
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ═════════════════════════════════════════════════════════
+       7-STEP AUTO-APPLY LIVE DRAWER / MODAL
+       ═════════════════════════════════════════════════════════ -->
+  <div class="pipeline-overlay" id="pipeline-overlay">
+    <div class="pipeline-card">
+      <div class="pipeline-header">
+        <div>
+          <span class="pipeline-tag">⚡ 7-Step AutoApply Pipeline</span>
+          <h3 id="pipeline-job-title">Développeur Full Stack React/Node.js</h3>
+          <p id="pipeline-company">Doctolib · Paris (Hybride)</p>
+        </div>
+        <button class="modal-close" onclick="closePipelineOverlay()">✕</button>
+      </div>
+
+      <!-- 7 Steps Visualizer -->
+      <div class="pipeline-steps-list">
+        
+        <div class="p-step" id="p-step-1">
+          <div class="p-step-num">1</div>
+          <div class="p-step-content">
+            <strong>Ouverture de l'offre WTTJ</strong>
+            <span>Chargement direct de la page officielle</span>
+          </div>
+          <div class="p-step-status"><span class="step-spinner"></span></div>
+        </div>
+
+        <div class="p-step" id="p-step-2">
+          <div class="p-step-num">2</div>
+          <div class="p-step-content">
+            <strong>Vérification & Session Candidat</strong>
+            <span>Contrôle du compte candidat synchronisé</span>
+          </div>
+          <div class="p-step-status">⏳</div>
+        </div>
+
+        <div class="p-step" id="p-step-3">
+          <div class="p-step-num">3</div>
+          <div class="p-step-content">
+            <strong>Remplissage des Coordonnées</strong>
+            <span>Nom, prénom, téléphone et LinkedIn injectés</span>
+          </div>
+          <div class="p-step-status">⏳</div>
+        </div>
+
+        <div class="p-step" id="p-step-4">
+          <div class="p-step-num">4</div>
+          <div class="p-step-content">
+            <strong>Téléversement du CV (PDF)</strong>
+            <span>Association du document officiel</span>
+          </div>
+          <div class="p-step-status">⏳</div>
+        </div>
+
+        <div class="p-step" id="p-step-5">
+          <div class="p-step-num">5</div>
+          <div class="p-step-content">
+            <strong>Lettre de Motivation Personnalisée</strong>
+            <span>Génération et injection dans le formulaire</span>
+          </div>
+          <div class="p-step-status">⏳</div>
+        </div>
+
+        <div class="p-step" id="p-step-6">
+          <div class="p-step-num">6</div>
+          <div class="p-step-content">
+            <strong>Validation des Conditions & CGU</strong>
+            <span>Consentement RGPD & politique recruteur</span>
+          </div>
+          <div class="p-step-status">⏳</div>
+        </div>
+
+        <div class="p-step" id="p-step-7">
+          <div class="p-step-num">7</div>
+          <div class="p-step-content">
+            <strong>Soumission & Synchronisation WTTJ</strong>
+            <span>Envoi final de la candidature</span>
+          </div>
+          <div class="p-step-status">⏳</div>
+        </div>
+
+      </div>
+
+      <!-- Realtime Screenshot Live Preview -->
+      <div class="pipeline-screenshot-box">
+        <label>Capture d'écran de l'automatisation en direct :</label>
+        <div class="screenshot-frame">
+          <img id="pipeline-live-screenshot" src="/screenshots/debug_wttj_page.png" alt="Aperçu direct" onerror="this.style.display='none'" />
+        </div>
+      </div>
+
+      <div class="pipeline-footer">
+        <span id="pipeline-footer-status">🚀 Pipeline démarré en arrière-plan...</span>
+        <button class="btn-secondary btn-sm" onclick="closePipelineOverlay()">Réduire en arrière-plan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

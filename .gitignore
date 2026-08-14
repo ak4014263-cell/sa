@@ -1,0 +1,6 @@
+node_modules/
+public/screenshots/
+public/uploads/
+.env
+*.log
+dump*.html
