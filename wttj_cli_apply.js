@@ -233,7 +233,7 @@ async function main() {
 
   // Step 1: Scrape live jobs
   console.log(`\n🔍 [Scraper] Querying live jobs for: "${args.query}" in "${args.location}"...`);
-  const rawJobs = await scrapeWTTJJobs(args.query, args.location, 1);
+  const rawJobs = await scrapeWTTJJobs({ query: args.query, location: args.location, hitsPerPage: args.limit });
   let jobs = rawJobs.slice(0, args.limit);
   console.log(`✅ [Scraper] Loaded ${jobs.length} targeted jobs from Welcome to the Jungle!`);
 
