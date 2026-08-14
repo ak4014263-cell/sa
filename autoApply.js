@@ -289,10 +289,19 @@ async function executeSingleApplication(job, profile, applicationId) {
       }
     }).catch(() => {});
 
-    await new Promise(r => setTimeout(r, 5000));
+    await new Promise(r => setTimeout(r, 6000));
+
+    // Verify on official tracker and capture proof
+    try {
+      await page.goto('https://www.welcometothejungle.com/fr/me/application-tracker', { waitUntil: 'domcontentloaded', timeout: 20000 });
+      await new Promise(r => setTimeout(r, 5000));
+      await page.evaluate(() => {
+        document.querySelectorAll('[id*="axeptio"], #axeptio_overlay, .axeptio_mount').forEach(el => el.remove());
+      });
+    } catch (e) {}
 
     let screenshot7 = path.join(screenshotDir, `${applicationId}_step7_done.png`);
-    await page.screenshot({ path: screenshot7 }).catch(() => {});
+    await page.screenshot({ path: screenshot7, fullPage: true }).catch(() => {});
 
     emitStatus(applicationId, 7, 'final_submit', 'completed', `🎉 Application successfully submitted to ${job.company}!`, {
       status: 'completed',
