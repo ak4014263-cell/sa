@@ -214,16 +214,18 @@ async function autoApply(job, profile, applicationId) {
     emitStatus(applicationId, 4, 'attach_cv', 'active', `Attaching candidate resume (${cvName})...`);
     
     try {
-      const resumeInput = await page.$('input[type="file"][accept*="pdf"], input[name*="resume"], input[name*="cv"], input[id*="resume"], input[type="file"]');
+      const resumeInput = await page.$('input[name="resume"]');
       if (resumeInput) {
         const cvPath = path.join(__dirname, 'CV_Hamid_Boumela.pdf');
         if (fs.existsSync(cvPath)) {
           await resumeInput.uploadFile(cvPath);
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.log('[AutoApply] Resume upload note:', e.message);
+    }
 
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 1500));
 
     let screenshot4 = path.join(screenshotDir, `${applicationId}_step4_cv.png`);
     await page.screenshot({ path: screenshot4 }).catch(() => {});
@@ -254,11 +256,23 @@ async function autoApply(job, profile, applicationId) {
 
     // ── STEP 6: Validate Terms & Recruiter Policy ──
     emitStatus(applicationId, 6, 'validate_terms', 'active', `Accepting recruiter policy & terms...`);
+    
+    try {
+      const consent = await page.$('input[name="consent"]');
+      if (consent) {
+        await consent.evaluate(el => el.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+        await new Promise(r => setTimeout(r, 400));
+        await consent.click();
+      }
+    } catch (e) {}
+
     await page.evaluate(() => {
       const cbs = document.querySelectorAll('input[type="checkbox"]');
       cbs.forEach(cb => { 
-        cb.checked = true; 
-        cb.dispatchEvent(new Event('change', { bubbles: true }));
+        if (!cb.checked) {
+          cb.click();
+          cb.dispatchEvent(new Event('change', { bubbles: true }));
+        }
       });
     }).catch(() => {});
 
@@ -274,7 +288,7 @@ async function autoApply(job, profile, applicationId) {
     emitStatus(applicationId, 7, 'final_submit', 'active', `Submitting application to ${job.company}...`);
 
     await page.evaluate(() => {
-      // Scroll modal
+      // Scroll modal to bottom
       document.querySelectorAll('div, form, section').forEach(el => {
         if (el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
       });
@@ -282,7 +296,7 @@ async function autoApply(job, profile, applicationId) {
       const buttons = [...document.querySelectorAll('button')];
       const submitBtn = buttons.find(b => {
         const txt = (b.textContent || '').trim().toLowerCase();
-        return txt.includes('envoyer') || txt.includes('soumettre') || txt.includes('valider') || txt.includes('confirmer') || (txt.includes('postuler') && !txt.includes('cette offre'));
+        return txt.includes('envoie ma candidature') || txt.includes('envoyer') || txt.includes('soumettre') || txt.includes('valider') || (txt.includes('postuler') && !txt.includes('cette offre'));
       });
       if (submitBtn) {
         submitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -290,7 +304,7 @@ async function autoApply(job, profile, applicationId) {
       }
     }).catch(() => {});
 
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 5000));
 
     let screenshot7 = path.join(screenshotDir, `${applicationId}_step7_done.png`);
     await page.screenshot({ path: screenshot7 }).catch(() => {});
