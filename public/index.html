@@ -386,12 +386,14 @@ Alexandre Dubois</textarea>
             <label for="login-password">Mot de passe</label>
             <input type="password" id="login-password" placeholder="••••••••" value="Pommier78955&&" />
           </div>
-          <div class="form-group">
-            <label for="login-cookie">Token de Session WTTJ / Cookie (Optionnel - Contourne tout blocage)</label>
-            <input type="text" id="login-cookie" placeholder="wttj_api_session_key ou chaîne de cookies..." />
-            <span class="field-hint">💡 Astuce : Utilisez notre Extension Chrome ou collez votre cookie de session pour vous connecter instantanément sans code de sécurité.</span>
+          <div class="form-group" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
+            <button type="button" class="btn-secondary btn-block" onclick="launchManualBrowserLogin()" style="background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2);">
+              🌐 Ouvrir Chrome pour se connecter & valider l'email (1 seule fois)
+            </button>
+            <span class="field-hint" style="text-align: center; display: block; margin-top: 6px;">Ouvre une vraie fenêtre Chrome pour vous connecter avec votre compte WTTJ et valider le lien Gmail. La session sera sauvegardée définitivement.</span>
           </div>
-          <button type="button" class="btn-primary btn-block" onclick="handleQuickLogin()">
+          
+          <button type="button" class="btn-primary btn-block" onclick="handleQuickLogin()" style="margin-top: 12px;">
             ⚡ Synchroniser ma Session
           </button>
         </div>

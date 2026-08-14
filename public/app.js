@@ -584,6 +584,23 @@ async function handleQuickLogin() {
   }
 }
 
+// ── Manual Browser Login ──
+async function launchManualBrowserLogin() {
+  showToast('🌐 Ouverture de Chrome pour la connexion...', 'info');
+  try {
+    const res = await fetch(`${API}/auth/manual-login`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message, 'success');
+      addTerminalLog('[Auth] Fenêtre Chrome interactive lancée pour validation Gmail', 'info');
+    } else {
+      showToast(data.error || 'Erreur lors de l\'ouverture du navigateur', 'error');
+    }
+  } catch (err) {
+    showToast('Erreur serveur', 'error');
+  }
+}
+
 // ── CV File Upload ──
 async function handleCvFileSelect(event) {
   const file = event.target.files[0];

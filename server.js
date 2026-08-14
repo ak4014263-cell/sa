@@ -158,6 +158,64 @@ app.post('/api/auth', (req, res) => {
   res.json({ success: true, profile });
 });
 
+// POST /api/auth/manual-login — Opens interactive browser to complete WTTJ email/magic link verification once
+app.post('/api/auth/manual-login', async (req, res) => {
+  const puppeteer = require('puppeteer-extra');
+  const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+  puppeteer.use(StealthPlugin());
+  
+  const sessionDir = path.join(__dirname, 'chrome_session');
+  if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
+
+  console.log('[Auth] Opening interactive Chrome browser for manual WTTJ login & email verification...');
+  
+  try {
+    const browser = await puppeteer.launch({
+      headless: false,
+      userDataDir: sessionDir,
+      defaultViewport: null,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--start-maximized']
+    });
+
+    const pages = await browser.pages();
+    const page = pages.length > 0 ? pages[0] : await browser.newPage();
+    await page.goto('https://www.welcometothejungle.com/fr/authenticate/login', { waitUntil: 'domcontentloaded' });
+
+    res.json({
+      success: true,
+      message: 'Navigateur interactif ouvert ! Connectez-vous et validez votre email dans la fenêtre Chrome.'
+    });
+
+    // Monitor for successful login in background
+    const checkInterval = setInterval(async () => {
+      try {
+        const url = page.url();
+        const cookies = await page.cookies();
+        const hasSession = cookies.some(c => c.name.includes('session') || c.name.includes('token') || c.name.includes('jwt') || c.name.includes('auth'));
+
+        if (url.includes('/me') || url.includes('/companies') || (hasSession && !url.includes('/login'))) {
+          clearInterval(checkInterval);
+          profile.isSynced = true;
+          console.log('[Auth] Manual login successfully verified on Welcome to the Jungle!');
+          broadcastEvent({
+            type: 'sync_success',
+            profile,
+            message: '🎉 Session WTTJ authentifiée et liée avec succès !'
+          });
+        }
+      } catch (e) {
+        clearInterval(checkInterval);
+      }
+    }, 2500);
+
+    setTimeout(() => clearInterval(checkInterval), 180000);
+
+  } catch (err) {
+    console.error('[Auth] Failed to open manual browser:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // POST /api/register — 3-Step Full Candidate Onboarding
 app.post('/api/register', (req, res) => {
   const { email, password, firstName, lastName, phone, linkedin, title, availability, coverLetter } = req.body;
