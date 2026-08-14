@@ -37,14 +37,14 @@ let applications = {}; // applicationId -> { applicationId, job, profile, status
 let profile = {
   email: 'boumelahamid@gmail.com',
   wttjPassword: 'Pommier78955&&',
-  firstName: 'Hamid',
-  lastName: 'Boumela',
-  phone: '+33 6 12 34 56 78',
-  linkedin: 'https://linkedin.com/in/alexandre-dubois',
+  firstName: 'Fahid',
+  lastName: 'El Garouani',
+  phone: '0651782681',
+  linkedin: 'https://linkedin.com/in/fahid-el-garouani',
   title: 'Développeur Full Stack Senior',
   availability: 'Immédiate',
-  coverLetter: "Madame, Monsieur,\n\nVivement intéressé par vos projets innovants et votre culture d'entreprise, je souhaite mettre à profit mes 5 années d'expérience en React, Node.js et architecture cloud au sein de votre équipe.\n\nRestant à votre disposition pour un échange,\nAlexandre Dubois",
-  cvFilename: 'CV_Alexandre_Dubois.pdf',
+  coverLetter: `Madame, Monsieur,\n\nVivement intéressé par vos projets innovants et votre culture d'entreprise, je souhaite mettre à profit mes compétences en développement logiciel Full Stack au sein de votre équipe.\n\nRestant à votre disposition pour un échange,\nFahid El Garouani`,
+  cvFilename: 'CV_Hamid_Boumela.pdf',
   isSynced: true
 };
 

@@ -588,6 +588,12 @@ async function handleQuickLogin() {
 
 // ── Manual Browser Login ──
 async function launchManualBrowserLogin() {
+  if (profile && profile.isSynced) {
+    showToast(`✅ WTTJ Account (${profile.email}) is already authenticated & connected!`, 'success');
+    addTerminalLog(`[Sync] Active authenticated session confirmed for ${profile.email}`, 'success');
+    return;
+  }
+
   showToast('🌐 Opening Chrome for login & verification...', 'info');
   try {
     const res = await fetch(`${API}/auth/manual-login`, { method: 'POST' });

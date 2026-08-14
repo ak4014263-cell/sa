@@ -1,3 +1,6 @@
-2026/08/14-20:13:01.457 1e80 Reusing MANIFEST C:\Users\hp\Downloads\New folder (11)\chrome_session\Default\Session Storage/MANIFEST-000001
-2026/08/14-20:13:01.459 1e80 Recovering log #10
-2026/08/14-20:13:01.466 1e80 Reusing old log C:\Users\hp\Downloads\New folder (11)\chrome_session\Default\Session Storage/000010.log 
+2026/08/14-20:20:44.070 a78 Reusing MANIFEST C:\Users\hp\Downloads\New folder (11)\chrome_session\Default\Session Storage/MANIFEST-000001
+2026/08/14-20:20:44.073 a78 Recovering log #10
+2026/08/14-20:20:44.079 a78 Reusing old log C:\Users\hp\Downloads\New folder (11)\chrome_session\Default\Session Storage/000010.log 
+2026/08/14-20:21:05.270 2d88 Level-0 table #14: started
+2026/08/14-20:21:05.285 2d88 Level-0 table #14: 15169 bytes OK
+2026/08/14-20:21:05.290 2d88 Delete type=0 #10
