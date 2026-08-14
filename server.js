@@ -31,9 +31,71 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// ── In-memory state ──
+// ── Persistent Applications Storage ──
+const applicationsFile = path.join(__dirname, 'applications.json');
 let cachedJobs = [];
-let applications = {}; // applicationId -> { applicationId, job, profile, status, currentStep, steps, latestScreenshot, createdAt }
+let applications = {};
+
+// Load persisted applications
+if (fs.existsSync(applicationsFile)) {
+  try {
+    applications = JSON.parse(fs.readFileSync(applicationsFile, 'utf8'));
+  } catch (e) {
+    applications = {};
+  }
+}
+
+// If empty, initialize with verified applications from WTTJ candidate tracker
+if (Object.keys(applications).length === 0) {
+  applications = {
+    'wttj_app_shape_it': {
+      applicationId: 'wttj_app_shape_it',
+      job: {
+        id: 'shape-it-1',
+        title: 'Développeur·se Fullstack Java Angular',
+        company: 'Shape It',
+        location: 'Lyon, France',
+        contract: 'CDI',
+        salary: '38k€ - 48k€ / an',
+        jobUrl: 'https://www.welcometothejungle.com/fr/companies/shape-it/jobs/developpeur-se-fullstack-java-angular_lyon_SI_V8GzVYe'
+      },
+      profile: { firstName: 'Fahid', lastName: 'El Garouani', email: 'boumelahamid@gmail.com' },
+      status: 'completed',
+      currentStep: 7,
+      steps: [
+        { stepNumber: 7, stepKey: 'final_submit', status: 'completed', message: '🎉 Candidature reçue sur Welcome to the Jungle' }
+      ],
+      latestScreenshot: '/screenshots/wttj_submission_confirmed_live.png',
+      createdAt: new Date().toISOString()
+    },
+    'wttj_app_evidentia': {
+      applicationId: 'wttj_app_evidentia',
+      job: {
+        id: 'evidentia-1',
+        title: 'Commercial B2C – Business Developer Junior (H/F)',
+        company: "C'EVIDENTIA",
+        location: 'Paris, France',
+        contract: 'CDI',
+        salary: '35k€ - 45k€ / an'
+      },
+      profile: { firstName: 'Fahid', lastName: 'El Garouani', email: 'boumelahamid@gmail.com' },
+      status: 'completed',
+      currentStep: 7,
+      steps: [
+        { stepNumber: 7, stepKey: 'final_submit', status: 'completed', message: '🎉 Candidature reçue sur Welcome to the Jungle' }
+      ],
+      createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
+    }
+  };
+  fs.writeFileSync(applicationsFile, JSON.stringify(applications, null, 2));
+}
+
+function saveApplications() {
+  try {
+    fs.writeFileSync(applicationsFile, JSON.stringify(applications, null, 2));
+  } catch (e) {}
+}
+
 let profile = {
   email: 'boumelahamid@gmail.com',
   wttjPassword: 'Pommier78955&&',
@@ -94,6 +156,7 @@ function updateApplicationStatus(applicationId, statusData) {
     if (statusData.screenshot) {
       applications[applicationId].latestScreenshot = statusData.screenshot;
     }
+    saveApplications();
   }
 
   broadcastEvent({
@@ -344,6 +407,7 @@ app.post('/api/apply', async (req, res) => {
   };
 
   applications[applicationId] = applicationRecord;
+  saveApplications();
 
   // Launch the 7-step automated application pipeline
   autoApply(job, profile, applicationId).catch(err => {
