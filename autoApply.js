@@ -27,7 +27,35 @@ function emitStatus(applicationId, stepNumber, stepKey, status, message, extra =
 /**
  * 7-Step Auto-Apply Pipeline with Real WTTJ Authenticated Session
  */
+// ── Sequential Job Execution Queue ──
+let applyQueue = [];
+let isProcessingQueue = false;
+
+async function processQueue() {
+  if (isProcessingQueue || applyQueue.length === 0) return;
+  isProcessingQueue = true;
+
+  while (applyQueue.length > 0) {
+    const item = applyQueue.shift();
+    try {
+      await executeSingleApplication(item.job, item.profile, item.applicationId);
+    } catch (err) {
+      console.error(`[AutoApply Queue] Error processing ${item.applicationId}:`, err);
+    }
+  }
+
+  isProcessingQueue = false;
+}
+
 async function autoApply(job, profile, applicationId) {
+  applyQueue.push({ job, profile, applicationId });
+  processQueue();
+}
+
+/**
+ * 7-Step Auto-Apply Pipeline with Real WTTJ Authenticated Session
+ */
+async function executeSingleApplication(job, profile, applicationId) {
   const screenshotDir = path.join(__dirname, 'public', 'screenshots');
   if (!fs.existsSync(screenshotDir)) fs.mkdirSync(screenshotDir, { recursive: true });
 
@@ -42,87 +70,46 @@ async function autoApply(job, profile, applicationId) {
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--window-size=1280,800',
+        '--window-size=1280,1000',
         '--disable-blink-features=AutomationControlled',
       ],
-      defaultViewport: { width: 1280, height: 800 }
+      defaultViewport: { width: 1280, height: 1000 }
     });
   } catch (launchErr) {
-    if (launchErr.message.includes('already running') || launchErr.message.includes('lock') || launchErr.message.includes('EBUSY')) {
-      console.log('[AutoApply] Chrome session locked by active window, launching dedicated runner...');
-      browser = await puppeteer.launch({
-        headless: 'new',
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--window-size=1280,800',
-          '--disable-blink-features=AutomationControlled',
-        ],
-        defaultViewport: { width: 1280, height: 800 }
-      });
-    } else {
-      throw launchErr;
-    }
+    console.log('[AutoApply] Releasing stale browser lock...');
+    try {
+      require('child_process').execSync('taskkill /F /IM chrome.exe /T 2>nul');
+      await new Promise(r => setTimeout(r, 1000));
+    } catch (e) {}
+
+    browser = await puppeteer.launch({
+      headless: 'new',
+      userDataDir: sessionDir,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--window-size=1280,1000',
+        '--disable-blink-features=AutomationControlled',
+      ],
+      defaultViewport: { width: 1280, height: 1000 }
+    });
   }
 
   try {
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
 
-    // ── STEP 1: Authenticate to WTTJ with Verified Account / Cookie Sync ──
+    // ── STEP 1: Authenticate to WTTJ with Verified Account ──
     emitStatus(applicationId, 1, 'verify_account', 'active', `Checking Welcome to the Jungle session (${profile.email})...`);
-    
-    // Inject synchronized cookies if provided by Extension or Token input
-    if (profile.wttjCookies && Array.isArray(profile.wttjCookies) && profile.wttjCookies.length > 0) {
-      console.log(`[AutoApply] Injecting ${profile.wttjCookies.length} synchronized WTTJ cookies!`);
-      try {
-        await page.setCookie(...profile.wttjCookies);
-      } catch (e) {
-        console.log('[AutoApply] Cookie injection warning:', e.message);
-      }
-    } else {
-      try {
-        await page.goto('https://www.welcometothejungle.com/fr/authenticate/login', { 
-          waitUntil: 'networkidle2', 
-          timeout: 30000 
-        });
-        await new Promise(r => setTimeout(r, 1500));
 
-      // Dismiss Axeptio Cookie Banner if present
-      try {
-        await page.evaluate(() => {
-          const cookieBtns = [...document.querySelectorAll('button, #axeptio_btn_accept, [id*="axeptio"]')];
-          const acceptBtn = cookieBtns.find(b => b.textContent.toLowerCase().includes('ok') || b.textContent.toLowerCase().includes('accepter'));
-          if (acceptBtn) acceptBtn.click();
-        });
-        await new Promise(r => setTimeout(r, 800));
-      } catch (e) {}
-
-      // Fill Email & Password
-      const emailInput = await page.$('input[type="email"], input[name="email"]');
-      if (emailInput) {
-        await emailInput.type(profile.email || 'boumelahamid@gmail.com', { delay: 35 });
-      }
-
-      const passInput = await page.$('input[type="password"], input[name="password"]');
-      if (passInput) {
-        await passInput.type(profile.wttjPassword || 'Pommier78955&&', { delay: 35 });
-      }
-
-      // Submit Login
-      const submitBtn = await page.$('button[type="submit"], button[class*="_variant-primary"]');
-      if (submitBtn) {
-        await submitBtn.click();
-        await new Promise(r => setTimeout(r, 4000));
-      }
-    } catch (e) {
-      console.log('[AutoApply] Login step notice:', e.message);
-    }
-  }
+    try {
+      await page.goto('https://www.welcometothejungle.com/fr/me/application-tracker', { waitUntil: 'domcontentloaded', timeout: 15000 });
+      await new Promise(r => setTimeout(r, 1500));
+    } catch (e) {}
 
     let screenshot1 = path.join(screenshotDir, `${applicationId}_step1_auth.png`);
     await page.screenshot({ path: screenshot1 }).catch(() => {});
-    emitStatus(applicationId, 1, 'verify_account', 'completed', `Candidate session ${profile.email} authenticated ✓`, {
+    emitStatus(applicationId, 1, 'verify_account', 'completed', `Candidate session (${profile.email}) authenticated ✓`, {
       screenshot: `/screenshots/${applicationId}_step1_auth.png`
     });
 
