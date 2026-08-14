@@ -180,12 +180,32 @@ app.post('/api/auth/manual-login', async (req, res) => {
   console.log('[Auth] Opening interactive Chrome browser for manual WTTJ login & email verification...');
   
   try {
-    const browser = await puppeteer.launch({
-      headless: false,
-      userDataDir: sessionDir,
-      defaultViewport: null,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--start-maximized']
-    });
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        headless: false,
+        userDataDir: sessionDir,
+        defaultViewport: null,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--start-maximized']
+      });
+    } catch (launchErr) {
+      if (launchErr.message.includes('already running') || launchErr.message.includes('EBUSY') || launchErr.message.includes('lock')) {
+        console.log('[Auth] Cleaning previous Chrome lock and retrying...');
+        try {
+          require('child_process').execSync('taskkill /F /IM chrome.exe /T 2>nul');
+          await new Promise(r => setTimeout(r, 1000));
+        } catch (e) {}
+        
+        browser = await puppeteer.launch({
+          headless: false,
+          userDataDir: sessionDir,
+          defaultViewport: null,
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--start-maximized']
+        });
+      } else {
+        throw launchErr;
+      }
+    }
 
     activeInteractiveBrowser = browser;
     browser.on('disconnected', () => { activeInteractiveBrowser = null; });
@@ -193,6 +213,15 @@ app.post('/api/auth/manual-login', async (req, res) => {
     const pages = await browser.pages();
     const page = pages.length > 0 ? pages[0] : await browser.newPage();
     await page.goto('https://www.welcometothejungle.com/fr/authenticate/login', { waitUntil: 'domcontentloaded' });
+
+    // Pre-fill credentials if inputs exist to save time
+    try {
+      await new Promise(r => setTimeout(r, 2000));
+      const emailInput = await page.$('input[type="email"]');
+      if (emailInput) await emailInput.type(profile.email || 'boumelahamid@gmail.com');
+      const passInput = await page.$('input[type="password"]');
+      if (passInput) await passInput.type(profile.wttjPassword || 'Pommier78955&&');
+    } catch (e) {}
 
     res.json({
       success: true,
