@@ -31,8 +31,12 @@ async function autoApply(job, profile, applicationId) {
   const screenshotDir = path.join(__dirname, 'public', 'screenshots');
   if (!fs.existsSync(screenshotDir)) fs.mkdirSync(screenshotDir, { recursive: true });
 
+  const sessionDir = path.join(__dirname, 'chrome_session');
+  if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
+
   const browser = await puppeteer.launch({
     headless: 'new',
+    userDataDir: sessionDir,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -109,7 +113,17 @@ async function autoApply(job, profile, applicationId) {
     
     try {
       await page.goto(jobUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
-      await new Promise(r => setTimeout(r, 1500));
+      await new Promise(r => setTimeout(r, 2000));
+
+      // Dismiss Axeptio Cookie Banner on job page
+      try {
+        await page.evaluate(() => {
+          const btns = [...document.querySelectorAll('button, #axeptio_btn_accept')];
+          const accept = btns.find(b => b.textContent.includes('OK') || b.textContent.includes('Accepter') || b.textContent.includes('ok'));
+          if (accept) accept.click();
+        });
+        await new Promise(r => setTimeout(r, 600));
+      } catch (e) {}
     } catch (e) {
       console.log(`[AutoApply] Fast navigation fallback for: ${jobUrl}`);
     }
