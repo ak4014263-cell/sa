@@ -51,7 +51,7 @@ async function autoApply(job, profile, applicationId) {
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
 
     // ── STEP 1: Authenticate to WTTJ with Verified Account / Cookie Sync ──
-    emitStatus(applicationId, 1, 'verify_account', 'active', `Vérification de la session Welcome to the Jungle (${profile.email})...`);
+    emitStatus(applicationId, 1, 'verify_account', 'active', `Checking Welcome to the Jungle session (${profile.email})...`);
     
     // Inject synchronized cookies if provided by Extension or Token input
     if (profile.wttjCookies && Array.isArray(profile.wttjCookies) && profile.wttjCookies.length > 0) {
@@ -103,12 +103,12 @@ async function autoApply(job, profile, applicationId) {
 
     let screenshot1 = path.join(screenshotDir, `${applicationId}_step1_auth.png`);
     await page.screenshot({ path: screenshot1 }).catch(() => {});
-    emitStatus(applicationId, 1, 'verify_account', 'completed', `Session candidat ${profile.email} authentifiée ✓`, {
+    emitStatus(applicationId, 1, 'verify_account', 'completed', `Candidate session ${profile.email} authenticated ✓`, {
       screenshot: `/screenshots/${applicationId}_step1_auth.png`
     });
 
     // ── STEP 2: Navigate to the Job Page with Active Session ──
-    emitStatus(applicationId, 2, 'open_job', 'active', `Ouverture de l'offre WTTJ : ${job.title} @ ${job.company}`);
+    emitStatus(applicationId, 2, 'open_job', 'active', `Opening WTTJ job page: ${job.title} @ ${job.company}`);
     const jobUrl = job.jobUrl || `https://www.welcometothejungle.com/fr/jobs?query=${encodeURIComponent(job.title)}`;
     
     try {
@@ -130,12 +130,12 @@ async function autoApply(job, profile, applicationId) {
 
     let screenshot2 = path.join(screenshotDir, `${applicationId}_step2_job.png`);
     await page.screenshot({ path: screenshot2 }).catch(() => {});
-    emitStatus(applicationId, 2, 'open_job', 'completed', `Page de l'offre chargée avec session active ✓`, {
+    emitStatus(applicationId, 2, 'open_job', 'completed', `Job page loaded with active candidate session ✓`, {
       screenshot: `/screenshots/${applicationId}_step2_job.png`
     });
 
     // ── STEP 3: Click Apply & Open Form ──
-    emitStatus(applicationId, 3, 'fill_profile', 'active', `Accès au formulaire de candidature...`);
+    emitStatus(applicationId, 3, 'fill_profile', 'active', `Opening application form...`);
     
     const applySelectors = [
       'a[href*="apply"]',
@@ -143,6 +143,8 @@ async function autoApply(job, profile, applicationId) {
       'a[data-testid*="apply"]',
       'button:has-text("Postuler")',
       'a:has-text("Postuler")',
+      'button:has-text("Apply")',
+      'a:has-text("Apply")',
     ];
     for (const sel of applySelectors) {
       try {
@@ -155,23 +157,23 @@ async function autoApply(job, profile, applicationId) {
 
     let screenshot3 = path.join(screenshotDir, `${applicationId}_step3_info.png`);
     await page.screenshot({ path: screenshot3 }).catch(() => {});
-    emitStatus(applicationId, 3, 'fill_profile', 'completed', `Formulaire candidat pré-rempli ✓`, {
+    emitStatus(applicationId, 3, 'fill_profile', 'completed', `Candidate details pre-filled ✓`, {
       screenshot: `/screenshots/${applicationId}_step3_info.png`
     });
 
     // ── STEP 4: Attach / Verify Candidate Resume (PDF) ──
-    const cvName = profile.cvFilename || 'CV_Alexandre_Dubois.pdf';
-    emitStatus(applicationId, 4, 'attach_cv', 'active', `Vérification du CV associé (${cvName})...`);
+    const cvName = profile.cvFilename || 'CV_Hamid_Boumela.pdf';
+    emitStatus(applicationId, 4, 'attach_cv', 'active', `Attaching candidate resume (${cvName})...`);
     await new Promise(r => setTimeout(r, 1200));
 
     let screenshot4 = path.join(screenshotDir, `${applicationId}_step4_cv.png`);
     await page.screenshot({ path: screenshot4 }).catch(() => {});
-    emitStatus(applicationId, 4, 'attach_cv', 'completed', `CV (${cvName}) associé et prêt ✓`, {
+    emitStatus(applicationId, 4, 'attach_cv', 'completed', `Resume (${cvName}) attached & ready ✓`, {
       screenshot: `/screenshots/${applicationId}_step4_cv.png`
     });
 
     // ── STEP 5: Inject Personalized Cover Letter ──
-    emitStatus(applicationId, 5, 'inject_letter', 'active', `Injection de la lettre de motivation pour ${job.company}...`);
+    emitStatus(applicationId, 5, 'inject_letter', 'active', `Injecting custom cover letter for ${job.company}...`);
     
     await page.evaluate((letter) => {
       const ta = document.querySelector('textarea[name*="letter"], textarea[name*="motivation"], textarea');
@@ -180,18 +182,18 @@ async function autoApply(job, profile, applicationId) {
         return true;
       }
       return false;
-    }, profile.coverLetter || "Madame, Monsieur, vivement intéressé par cette opportunité, je vous transmets ma candidature.").catch(() => false);
+    }, profile.coverLetter || "Dear Hiring Team, deeply interested in your team and innovative projects, please find my application enclosed.").catch(() => false);
 
     await new Promise(r => setTimeout(r, 1200));
 
     let screenshot5 = path.join(screenshotDir, `${applicationId}_step5_letter.png`);
     await page.screenshot({ path: screenshot5 }).catch(() => {});
-    emitStatus(applicationId, 5, 'inject_letter', 'completed', `Lettre de motivation personnalisée injectée ✓`, {
+    emitStatus(applicationId, 5, 'inject_letter', 'completed', `Tailored cover letter injected ✓`, {
       screenshot: `/screenshots/${applicationId}_step5_letter.png`
     });
 
     // ── STEP 6: Validate Terms & Recruiter Policy ──
-    emitStatus(applicationId, 6, 'validate_terms', 'active', `Validation des conditions et politique recruteur...`);
+    emitStatus(applicationId, 6, 'validate_terms', 'active', `Accepting recruiter policy & terms...`);
     await page.evaluate(() => {
       const cbs = document.querySelectorAll('input[type="checkbox"]');
       cbs.forEach(cb => { cb.checked = true; });
@@ -201,12 +203,12 @@ async function autoApply(job, profile, applicationId) {
 
     let screenshot6 = path.join(screenshotDir, `${applicationId}_step6_terms.png`);
     await page.screenshot({ path: screenshot6 }).catch(() => {});
-    emitStatus(applicationId, 6, 'validate_terms', 'completed', `Conditions & politique recruteur validées ✓`, {
+    emitStatus(applicationId, 6, 'validate_terms', 'completed', `Terms & recruiter policy accepted ✓`, {
       screenshot: `/screenshots/${applicationId}_step6_terms.png`
     });
 
     // ── STEP 7: Final Submit & Dual Sync ──
-    emitStatus(applicationId, 7, 'final_submit', 'active', `Transmission de la candidature à ${job.company}...`);
+    emitStatus(applicationId, 7, 'final_submit', 'active', `Submitting application to ${job.company}...`);
 
     await page.evaluate(() => {
       const buttons = [...document.querySelectorAll('button')];
@@ -214,7 +216,8 @@ async function autoApply(job, profile, applicationId) {
         b.textContent.toLowerCase().includes('envoyer') ||
         b.textContent.toLowerCase().includes('soumettre') ||
         b.textContent.toLowerCase().includes('submit') ||
-        b.textContent.toLowerCase().includes('postuler')
+        b.textContent.toLowerCase().includes('postuler') ||
+        b.textContent.toLowerCase().includes('apply')
       );
       if (submitBtn) submitBtn.click();
     }).catch(() => {});
@@ -224,7 +227,7 @@ async function autoApply(job, profile, applicationId) {
     let screenshot7 = path.join(screenshotDir, `${applicationId}_step7_done.png`);
     await page.screenshot({ path: screenshot7 }).catch(() => {});
 
-    emitStatus(applicationId, 7, 'final_submit', 'completed', `🎉 Candidature transmise avec succès à ${job.company} !`, {
+    emitStatus(applicationId, 7, 'final_submit', 'completed', `🎉 Application successfully submitted to ${job.company}!`, {
       status: 'completed',
       screenshot: `/screenshots/${applicationId}_step7_done.png`
     });

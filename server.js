@@ -158,6 +158,9 @@ app.post('/api/auth', (req, res) => {
   res.json({ success: true, profile });
 });
 
+// ── Interactive Single-Instance Browser State ──
+let activeInteractiveBrowser = null;
+
 // POST /api/auth/manual-login — Opens interactive browser to complete WTTJ email/magic link verification once
 app.post('/api/auth/manual-login', async (req, res) => {
   const puppeteer = require('puppeteer-extra');
@@ -166,6 +169,13 @@ app.post('/api/auth/manual-login', async (req, res) => {
   
   const sessionDir = path.join(__dirname, 'chrome_session');
   if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
+
+  if (activeInteractiveBrowser && activeInteractiveBrowser.isConnected()) {
+    return res.json({
+      success: true,
+      message: 'Chrome window is already open! Please complete your login in the window.'
+    });
+  }
 
   console.log('[Auth] Opening interactive Chrome browser for manual WTTJ login & email verification...');
   
@@ -177,18 +187,25 @@ app.post('/api/auth/manual-login', async (req, res) => {
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--start-maximized']
     });
 
+    activeInteractiveBrowser = browser;
+    browser.on('disconnected', () => { activeInteractiveBrowser = null; });
+
     const pages = await browser.pages();
     const page = pages.length > 0 ? pages[0] : await browser.newPage();
     await page.goto('https://www.welcometothejungle.com/fr/authenticate/login', { waitUntil: 'domcontentloaded' });
 
     res.json({
       success: true,
-      message: 'Navigateur interactif ouvert ! Connectez-vous et validez votre email dans la fenêtre Chrome.'
+      message: 'Interactive Chrome window opened! Please log in and verify your email in the browser.'
     });
 
     // Monitor for successful login in background
     const checkInterval = setInterval(async () => {
       try {
+        if (!browser.isConnected()) {
+          clearInterval(checkInterval);
+          return;
+        }
         const url = page.url();
         const cookies = await page.cookies();
         const hasSession = cookies.some(c => c.name.includes('session') || c.name.includes('token') || c.name.includes('jwt') || c.name.includes('auth'));
@@ -200,7 +217,7 @@ app.post('/api/auth/manual-login', async (req, res) => {
           broadcastEvent({
             type: 'sync_success',
             profile,
-            message: '🎉 Session WTTJ authentifiée et liée avec succès !'
+            message: '🎉 WTTJ session verified and permanently saved!'
           });
         }
       } catch (e) {

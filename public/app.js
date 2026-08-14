@@ -108,20 +108,20 @@ function updateProfileUI(p) {
   profile = p;
   
   // Sync bar
-  document.getElementById('sync-email-display').textContent = p.email || 'Non configuré';
+  document.getElementById('sync-email-display').textContent = p.email || 'Not configured';
   
   // WTTJ Profile Banner
-  const fullName = `${p.firstName || 'Alexandre'} ${p.lastName || 'Dubois'}`.trim();
+  const fullName = `${p.firstName || 'Hamid'} ${p.lastName || 'Boumela'}`.trim();
   document.getElementById('wttj-name-display').textContent = fullName;
-  document.getElementById('wttj-title-display').textContent = p.title || 'Développeur Full Stack';
+  document.getElementById('wttj-title-display').textContent = p.title || 'Senior Full Stack & AI Developer';
   document.getElementById('wttj-phone-display').textContent = `📱 ${p.phone || '+33 6 12 34 56 78'}`;
-  document.getElementById('wttj-cv-display').textContent = `📄 ${p.cvFilename || 'CV_Candidat.pdf'}`;
-  document.getElementById('wttj-avail-display').textContent = `⏱️ ${p.availability || 'Immédiate'}`;
-  document.getElementById('wttj-doc-name').textContent = p.cvFilename || 'CV_Alexandre_Dubois.pdf';
-  document.getElementById('wttj-letter-preview').textContent = p.coverLetter || 'Aucune lettre configurée';
+  document.getElementById('wttj-cv-display').textContent = `📄 ${p.cvFilename || 'CV_Hamid_Boumela.pdf'}`;
+  document.getElementById('wttj-avail-display').textContent = `⏱️ ${p.availability || 'Immediate'}`;
+  document.getElementById('wttj-doc-name').textContent = p.cvFilename || 'CV_Hamid_Boumela.pdf';
+  document.getElementById('wttj-letter-preview').textContent = p.coverLetter || 'No cover letter configured';
 
   // Initials
-  const initials = `${(p.firstName || 'A')[0]}${(p.lastName || 'D')[0]}`.toUpperCase();
+  const initials = `${(p.firstName || 'H')[0]}${(p.lastName || 'B')[0]}`.toUpperCase();
   document.getElementById('wttj-avatar-initials').textContent = initials;
 }
 
@@ -146,9 +146,9 @@ function renderCardDeck() {
     deck.innerHTML = `
       <div class="job-card" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
         <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
-        <h3>Vous avez vu toutes les offres !</h3>
-        <p style="color:var(--text-secondary); margin: 8px 0 20px;">Revenez plus tard ou réinitialisez la liste pour continuer à postuler.</p>
-        <button class="btn-primary" onclick="resetCards()">🔄 Réinitialiser les offres</button>
+        <h3>You have seen all available jobs!</h3>
+        <p style="color:var(--text-secondary); margin: 8px 0 20px;">Check back later or reset the deck to continue applying.</p>
+        <button class="btn-primary" onclick="resetCards()">🔄 Reset Job Deck</button>
       </div>
     `;
     return;
@@ -176,36 +176,36 @@ function createCardElement(job, isTop, depth) {
   if (isTop) activeCardElement = card;
 
   const initial = (job.company || 'W')[0].toUpperCase();
-  const tagsHtml = (job.tags || ['CDI', 'Temps plein', 'Tech']).slice(0, 4).map(t => `<span class="tag-badge">${t}</span>`).join('');
+  const tagsHtml = (job.tags || ['Full-time', 'Tech', 'Engineering']).slice(0, 4).map(t => `<span class="tag-badge">${t}</span>`).join('');
 
   card.innerHTML = `
     <!-- Top Stamp Badges -->
     <div class="stamp-overlay stamp-apply">APPLY ⚡</div>
-    <div class="stamp-overlay stamp-pass">PASSER ✕</div>
+    <div class="stamp-overlay stamp-pass">PASS ✕</div>
 
     <!-- Header Row -->
     <div class="card-header-row">
       <div class="company-badge">
         <div class="company-logo">${initial}</div>
         <div class="company-meta">
-          <strong>${job.company || 'Entreprise WTTJ'}</strong>
+          <strong>${job.company || 'WTTJ Company'}</strong>
           <span>📍 ${job.location || 'Paris, France'}</span>
         </div>
       </div>
-      <span class="wttj-source-tag">WTTJ Vérifié ✓</span>
+      <span class="wttj-source-tag">WTTJ Verified ✓</span>
     </div>
 
     <!-- Body -->
     <div class="card-body">
-      <h3 class="job-title">${job.title || 'Développeur Full Stack'}</h3>
+      <h3 class="job-title">${job.title || 'Full Stack Developer'}</h3>
       <div class="tags-row">${tagsHtml}</div>
-      <p class="job-desc">${job.description || "Rejoignez une équipe technique passionnée pour concevoir des produits modernes et scalables sur Welcome to the Jungle."}</p>
+      <p class="job-desc">${job.description || "Join a talented engineering team building modern and scalable products on Welcome to the Jungle."}</p>
     </div>
 
     <!-- Footer Meta -->
     <div class="card-footer-meta">
-      <span>💰 ${job.salary || '45k€ - 65k€'}</span>
-      <span>⏱️ ${job.contract || 'CDI'}</span>
+      <span>💰 ${job.salary || 'Competitive'}</span>
+      <span>⏱️ ${job.contract || 'Full-time'}</span>
     </div>
   `;
 
@@ -220,13 +220,14 @@ function isTopCardAvailable() {
 function attachDragListeners(card) {
   if (!card) return;
 
-  const onStart = (e) => {
+  function onStart(e) {
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
     isDragging = true;
     startX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
     card.style.transition = 'none';
-  };
+  }
 
-  const onMove = (e) => {
+  function onMove(e) {
     if (!isDragging) return;
     currentX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
     const deltaX = currentX - startX;
@@ -234,37 +235,38 @@ function attachDragListeners(card) {
 
     card.style.transform = `translateX(${deltaX}px) rotate(${rotate}deg)`;
 
-    // Show stamps
-    const applyStamp = card.querySelector('.stamp-apply');
-    const passStamp = card.querySelector('.stamp-pass');
+    const stampApply = card.querySelector('.stamp-apply');
+    const stampPass = card.querySelector('.stamp-pass');
 
     if (deltaX > 40) {
-      applyStamp.style.opacity = Math.min(1, (deltaX - 40) / 80);
-      passStamp.style.opacity = 0;
+      if (stampApply) stampApply.style.opacity = Math.min(1, (deltaX - 40) / 80);
+      if (stampPass) stampPass.style.opacity = 0;
     } else if (deltaX < -40) {
-      passStamp.style.opacity = Math.min(1, (-deltaX - 40) / 80);
-      applyStamp.style.opacity = 0;
+      if (stampPass) stampPass.style.opacity = Math.min(1, (-deltaX - 40) / 80);
+      if (stampApply) stampApply.style.opacity = 0;
     } else {
-      applyStamp.style.opacity = 0;
-      passStamp.style.opacity = 0;
+      if (stampApply) stampApply.style.opacity = 0;
+      if (stampPass) stampPass.style.opacity = 0;
     }
-  };
+  }
 
-  const onEnd = () => {
+  function onEnd() {
     if (!isDragging) return;
     isDragging = false;
-    card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
-
     const deltaX = currentX - startX;
-    if (deltaX > 120) {
+    const threshold = 120;
+
+    if (deltaX > threshold) {
       triggerSwipe('right');
-    } else if (deltaX < -120) {
+    } else if (deltaX < -threshold) {
       triggerSwipe('left');
     } else {
-      card.style.transform = '';
-      card.querySelectorAll('.stamp-overlay').forEach(s => s.style.opacity = 0);
+      card.style.transition = 'transform 0.3s ease-out';
+      card.style.transform = 'translateX(0px) rotate(0deg)';
+      const stamps = card.querySelectorAll('.stamp-overlay');
+      stamps.forEach(s => s.style.opacity = 0);
     }
-  };
+  }
 
   card.addEventListener('mousedown', onStart);
   window.addEventListener('mousemove', onMove);
@@ -291,7 +293,7 @@ function triggerSwipe(direction) {
     } else {
       card.style.transform = 'translateX(-600px) rotate(-30deg)';
       card.style.opacity = 0;
-      showToast(`Offre passée : ${currentJob.title}`, 'info');
+      showToast(`Skipped: ${currentJob.title}`, 'info');
     }
   }
 
@@ -326,7 +328,7 @@ async function handleApplyAction(job) {
     }
   } catch (err) {
     console.error('[Apply] Failed:', err);
-    showToast('Erreur lors du lancement de la candidature', 'error');
+    showToast('Error triggering application', 'error');
   }
 }
 
@@ -403,18 +405,18 @@ function renderWttjApplications() {
     container.innerHTML = `
       <div class="empty-wttj-state">
         <div class="empty-icon">📂</div>
-        <h4>Aucune candidature pour le moment</h4>
-        <p>Swiper à droite sur JobSwipe pour postuler automatiquement sur Welcome to the Jungle.</p>
+        <h4>No applications yet</h4>
+        <p>Swipe right on JobSwipe to apply automatically on Welcome to the Jungle.</p>
       </div>
     `;
     return;
   }
 
   container.innerHTML = appList.map(app => {
-    const jobTitle = app.job ? app.job.title : 'Développeur';
-    const company = app.job ? app.job.company : 'WTTJ Entreprise';
+    const jobTitle = app.job ? app.job.title : 'Full Stack Developer';
+    const company = app.job ? app.job.company : 'WTTJ Company';
     const isDone = app.status === 'completed';
-    const statusText = isDone ? 'Transmise ✓' : (app.status === 'error' ? 'Erreur ✕' : `Étape ${app.currentStep || 1}/7 ⚡`);
+    const statusText = isDone ? 'Submitted ✓' : (app.status === 'error' ? 'Error ✕' : `Step ${app.currentStep || 1}/7 ⚡`);
     const statusClass = isDone ? 'completed' : 'active';
 
     return `
@@ -427,7 +429,7 @@ function renderWttjApplications() {
           <span class="status-badge-live ${statusClass}">${statusText}</span>
         </div>
         <div>
-          <button class="btn-outline-sm" onclick="reopenPipeline('${app.applicationId}')">Suivi</button>
+          <button class="btn-outline-sm" onclick="reopenPipeline('${app.applicationId}')">Track</button>
         </div>
       </div>
     `;
@@ -518,13 +520,13 @@ async function handleOnboardingSubmit(event) {
     if (data.success) {
       updateProfileUI(data.profile);
       closeAuthModal();
-      showToast('🎉 Configuration terminée & synchronisée !', 'success');
+      showToast('🎉 Configuration saved & synchronized!', 'success');
       addTerminalLog(`[Auth] Full synchronized registration for ${payload.email}`, 'success');
     } else {
-      showToast(data.error || 'Erreur lors de l\'enregistrement', 'error');
+      showToast(data.error || 'Error saving profile', 'error');
     }
   } catch (err) {
-    showToast('Erreur serveur lors de la synchronisation', 'error');
+    showToast('Server error during synchronization', 'error');
   } finally {
     btn.disabled = false;
   }
@@ -575,29 +577,29 @@ async function handleQuickLogin() {
     if (data.success) {
       updateProfileUI(data.profile);
       closeAuthModal();
-      showToast('Connexion réussie & session WTTJ liée !', 'success');
+      showToast('Login successful & WTTJ session linked!', 'success');
     } else {
-      showToast(data.error || 'Identifiants invalides', 'error');
+      showToast(data.error || 'Invalid credentials', 'error');
     }
   } catch (e) {
-    showToast('Erreur de connexion', 'error');
+    showToast('Login error', 'error');
   }
 }
 
 // ── Manual Browser Login ──
 async function launchManualBrowserLogin() {
-  showToast('🌐 Ouverture de Chrome pour la connexion...', 'info');
+  showToast('🌐 Opening Chrome for login & verification...', 'info');
   try {
     const res = await fetch(`${API}/auth/manual-login`, { method: 'POST' });
     const data = await res.json();
     if (data.success) {
       showToast(data.message, 'success');
-      addTerminalLog('[Auth] Fenêtre Chrome interactive lancée pour validation Gmail', 'info');
+      addTerminalLog('[Auth] Interactive Chrome window opened for WTTJ login & verification', 'info');
     } else {
-      showToast(data.error || 'Erreur lors de l\'ouverture du navigateur', 'error');
+      showToast(data.error || 'Error opening browser window', 'error');
     }
   } catch (err) {
-    showToast('Erreur serveur', 'error');
+    showToast('Server error', 'error');
   }
 }
 
@@ -622,7 +624,7 @@ async function handleCvFileSelect(event) {
       document.getElementById('wttj-cv-display').textContent = `📄 ${data.filename}`;
     }
   } catch (err) {
-    showToast('Échec du téléversement du CV', 'error');
+    showToast('Resume upload failed', 'error');
   }
 }
 
@@ -632,7 +634,7 @@ function openPipelineOverlay(job) {
   document.getElementById('pipeline-company').textContent = `${job.company} · ${job.location || 'Paris'}`;
   
   // Reset steps
-  updatePipelineStep(1, 'active', 'Initialisation du pipeline en 7 étapes...');
+  updatePipelineStep(1, 'active', 'Initializing 7-step application pipeline...');
   document.getElementById('pipeline-overlay').classList.add('active');
 }
 
@@ -646,7 +648,7 @@ function reopenPipeline(appId) {
   if (app && app.job) {
     openPipelineOverlay(app.job);
     if (app.currentStep) {
-      updatePipelineStep(app.currentStep, app.status, `Suivi de la candidature #${appId}`, app.latestScreenshot);
+      updatePipelineStep(app.currentStep, app.status, `Tracking Application #${appId}`, app.latestScreenshot);
     }
   }
 }
@@ -672,7 +674,7 @@ function filterJobs(tag) {
   } else if (tag === 'paris') {
     filteredJobs = allJobs.filter(j => (j.location || '').toLowerCase().includes('paris'));
   } else if (tag === 'react') {
-    filteredJobs = allJobs.filter(j => (j.title || '').toLowerCase().includes('react') || (j.title || '').toLowerCase().includes('front'));
+    filteredJobs = allJobs.filter(j => (j.title || '').toLowerCase().includes('react') || (j.title || '').toLowerCase().includes('front') || (j.title || '').toLowerCase().includes('ai'));
   }
 
   currentJobIndex = 0;
@@ -682,13 +684,13 @@ function filterJobs(tag) {
 function resetCards() {
   currentJobIndex = 0;
   renderCardDeck();
-  showToast('Offres réinitialisées', 'info');
+  showToast('Job deck reset', 'info');
 }
 
 function triggerSaveJob() {
   if (currentJobIndex < filteredJobs.length) {
     const job = filteredJobs[currentJobIndex];
-    showToast(`⭐ Offre sauvegardée : ${job.title}`, 'info');
+    showToast(`⭐ Job saved: ${job.title}`, 'info');
   }
 }
 
@@ -743,13 +745,13 @@ async function toggleAutoPilot() {
     try {
       await fetch(`${API}/autopilot/stop`, { method: 'POST' });
       setAutoPilotUI(false);
-      showToast('⏸️ Auto-Pilot mis en pause', 'info');
+      showToast('⏸️ Auto-Pilot paused', 'info');
     } catch (e) {}
   } else {
     // Start Auto-Pilot
     const jobsToApply = filteredJobs.slice(currentJobIndex, currentJobIndex + 25);
     if (jobsToApply.length === 0) {
-      showToast('Aucune offre restante à traiter', 'warning');
+      showToast('No remaining jobs to process', 'warning');
       return;
     }
 
@@ -764,10 +766,10 @@ async function toggleAutoPilot() {
       if (data.success) {
         setAutoPilotUI(true, jobsToApply.length);
       } else {
-        showToast(data.error || 'Impossible de démarrer l\'auto-pilot', 'error');
+        showToast(data.error || 'Failed to start auto-pilot', 'error');
       }
     } catch (err) {
-      showToast('Erreur serveur auto-pilot', 'error');
+      showToast('Auto-pilot server error', 'error');
     } finally {
       btn.disabled = false;
     }
@@ -781,19 +783,19 @@ function setAutoPilotUI(isActive, total = 0) {
 
   if (isActive) {
     btn.className = 'btn-autopilot running';
-    btn.innerHTML = '<span>⏸️ Arrêter l\'Auto-Pilot</span>';
-    statusText.innerHTML = `<strong>🟢 En cours d'exécution :</strong> Traitement de ${total} candidatures en boucle...`;
+    btn.innerHTML = '<span>⏸️ Stop Auto-Pilot</span>';
+    statusText.innerHTML = `<strong>🟢 Executing:</strong> Auto-applying to ${total} jobs continuously...`;
   } else {
     btn.className = 'btn-autopilot';
-    btn.innerHTML = '<span>▶ Démarrer l\'Auto-Pilot (Full Auto)</span>';
-    statusText.textContent = 'Postule automatiquement à toutes les offres WTTJ en boucle';
+    btn.innerHTML = '<span>▶ Start Auto-Pilot (Full Auto)</span>';
+    statusText.textContent = 'Automatically applies to all WTTJ jobs continuously';
   }
 }
 
 function handleAutoPilotProgress(data) {
   document.getElementById('stat-applied-count').textContent = data.index;
   document.getElementById('autopilot-status-text').innerHTML = 
-    `<strong>⚡ Envoi ${data.index}/${data.total} :</strong> ${data.job?.title} @ ${data.job?.company}`;
+    `<strong>⚡ Sending ${data.index}/${data.total}:</strong> ${data.job?.title} @ ${data.job?.company}`;
 
   // Automatically advance card deck with animation
   const card = activeCardElement;
