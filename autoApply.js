@@ -34,17 +34,36 @@ async function autoApply(job, profile, applicationId) {
   const sessionDir = path.join(__dirname, 'chrome_session');
   if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
 
-  const browser = await puppeteer.launch({
-    headless: 'new',
-    userDataDir: sessionDir,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--window-size=1280,800',
-      '--disable-blink-features=AutomationControlled',
-    ],
-    defaultViewport: { width: 1280, height: 800 }
-  });
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: 'new',
+      userDataDir: sessionDir,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--window-size=1280,800',
+        '--disable-blink-features=AutomationControlled',
+      ],
+      defaultViewport: { width: 1280, height: 800 }
+    });
+  } catch (launchErr) {
+    if (launchErr.message.includes('already running') || launchErr.message.includes('lock') || launchErr.message.includes('EBUSY')) {
+      console.log('[AutoApply] Chrome session locked by active window, launching dedicated runner...');
+      browser = await puppeteer.launch({
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--window-size=1280,800',
+          '--disable-blink-features=AutomationControlled',
+        ],
+        defaultViewport: { width: 1280, height: 800 }
+      });
+    } else {
+      throw launchErr;
+    }
+  }
 
   try {
     const page = await browser.newPage();

@@ -1,6 +1,7 @@
 node_modules/
 public/screenshots/
 public/uploads/
+chrome_session/
 .env
 *.log
 dump*.html
