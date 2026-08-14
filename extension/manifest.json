@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "JobSwipe × WTTJ Session Bridge",
+  "version": "1.0.0",
+  "description": "Synchronise instantanément votre session active Welcome to the Jungle avec JobSwipe pour postuler automatiquement sans blocage de sécurité.",
+  "permissions": [
+    "cookies",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.welcometothejungle.com/*",
+    "http://localhost:3000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "JobSwipe WTTJ Sync"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

@@ -46,15 +46,24 @@ async function autoApply(job, profile, applicationId) {
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
 
-    // ── STEP 1: Authenticate to WTTJ with Verified Account ──
-    emitStatus(applicationId, 1, 'verify_account', 'active', `Connexion à Welcome to the Jungle (${profile.email})...`);
+    // ── STEP 1: Authenticate to WTTJ with Verified Account / Cookie Sync ──
+    emitStatus(applicationId, 1, 'verify_account', 'active', `Vérification de la session Welcome to the Jungle (${profile.email})...`);
     
-    try {
-      await page.goto('https://www.welcometothejungle.com/fr/authenticate/login', { 
-        waitUntil: 'networkidle2', 
-        timeout: 30000 
-      });
-      await new Promise(r => setTimeout(r, 1500));
+    // Inject synchronized cookies if provided by Extension or Token input
+    if (profile.wttjCookies && Array.isArray(profile.wttjCookies) && profile.wttjCookies.length > 0) {
+      console.log(`[AutoApply] Injecting ${profile.wttjCookies.length} synchronized WTTJ cookies!`);
+      try {
+        await page.setCookie(...profile.wttjCookies);
+      } catch (e) {
+        console.log('[AutoApply] Cookie injection warning:', e.message);
+      }
+    } else {
+      try {
+        await page.goto('https://www.welcometothejungle.com/fr/authenticate/login', { 
+          waitUntil: 'networkidle2', 
+          timeout: 30000 
+        });
+        await new Promise(r => setTimeout(r, 1500));
 
       // Dismiss Axeptio Cookie Banner if present
       try {
@@ -86,6 +95,7 @@ async function autoApply(job, profile, applicationId) {
     } catch (e) {
       console.log('[AutoApply] Login step notice:', e.message);
     }
+  }
 
     let screenshot1 = path.join(screenshotDir, `${applicationId}_step1_auth.png`);
     await page.screenshot({ path: screenshot1 }).catch(() => {});

@@ -524,19 +524,48 @@ async function handleOnboardingSubmit(event) {
 async function handleQuickLogin() {
   const email = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
+  const cookieVal = document.getElementById('login-cookie') ? document.getElementById('login-cookie').value.trim() : '';
+
+  let wttjCookies = [];
+  if (cookieVal) {
+    if (cookieVal.includes('=')) {
+      // Parse cookie string
+      wttjCookies = cookieVal.split(';').map(pair => {
+        const [k, ...v] = pair.trim().split('=');
+        return {
+          name: k,
+          value: v.join('='),
+          domain: '.welcometothejungle.com',
+          path: '/'
+        };
+      });
+    } else {
+      // Single token assumed as wttj_api_session_key
+      wttjCookies = [{
+        name: 'wttj_api_session_key',
+        value: cookieVal,
+        domain: '.welcometothejungle.com',
+        path: '/'
+      }];
+    }
+  }
 
   try {
     const res = await fetch(`${API}/auth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ 
+        email, 
+        password,
+        wttjCookies: wttjCookies.length > 0 ? wttjCookies : undefined
+      })
     });
     const data = await res.json();
 
     if (data.success) {
       updateProfileUI(data.profile);
       closeAuthModal();
-      showToast('Connexion réussie & profil synchronisé !', 'success');
+      showToast('Connexion réussie & session WTTJ liée !', 'success');
     } else {
       showToast(data.error || 'Identifiants invalides', 'error');
     }
