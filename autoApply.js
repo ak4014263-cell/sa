@@ -154,25 +154,54 @@ async function autoApply(job, profile, applicationId) {
     });
 
     // ── STEP 3: Click Apply & Open Form ──
-    emitStatus(applicationId, 3, 'fill_profile', 'active', `Opening application form...`);
+    emitStatus(applicationId, 3, 'fill_profile', 'active', `Opening application form for ${job.title}...`);
     
-    const applySelectors = [
-      'a[href*="apply"]',
-      'button[data-testid*="apply"]',
-      'a[data-testid*="apply"]',
-      'button:has-text("Postuler")',
-      'a:has-text("Postuler")',
-      'button:has-text("Apply")',
-      'a:has-text("Apply")',
-    ];
-    for (const sel of applySelectors) {
-      try {
-        const btn = await page.$(sel);
-        if (btn) { await btn.click(); break; }
-      } catch (e) {}
-    }
+    await page.evaluate(() => {
+      const btns = [...document.querySelectorAll('button, a')];
+      const applyBtn = btns.find(b => {
+        const txt = (b.textContent || '').trim().toLowerCase();
+        return txt === 'postuler' || txt === 'apply' || txt.includes('postuler à cette offre') || txt.includes('apply for this job');
+      });
+      if (applyBtn) applyBtn.click();
+    });
 
-    await new Promise(r => setTimeout(r, 1800));
+    await new Promise(r => setTimeout(r, 2500));
+
+    // Pre-fill all candidate fields
+    await page.evaluate((prof) => {
+      // Clear invalid photo error if present
+      const deletePhotoBtns = [...document.querySelectorAll('button')].filter(b => b.innerHTML.includes('trash') || b.getAttribute('aria-label')?.includes('Supprimer'));
+      deletePhotoBtns.forEach(b => b.click());
+
+      // First name
+      const fn = document.querySelector('input[name*="first_name"], input[name*="firstname"], input[placeholder*="Prénom"], input[placeholder*="First"]');
+      if (fn && !fn.value) { fn.value = prof.firstName || 'Fahid'; fn.dispatchEvent(new Event('input', { bubbles: true })); }
+
+      // Last name
+      const ln = document.querySelector('input[name*="last_name"], input[name*="lastname"], input[placeholder*="Nom"], input[placeholder*="Last"]');
+      if (ln && !ln.value) { ln.value = prof.lastName || 'El Garouani'; ln.dispatchEvent(new Event('input', { bubbles: true })); }
+
+      // Email
+      const em = document.querySelector('input[name*="email"], input[type="email"]');
+      if (em && !em.value) { em.value = prof.email || 'boumelahamid@gmail.com'; em.dispatchEvent(new Event('input', { bubbles: true })); }
+
+      // Phone
+      const ph = document.querySelector('input[name*="phone"], input[type="tel"]');
+      if (ph && !ph.value) { ph.value = prof.phone || '0651782681'; ph.dispatchEvent(new Event('input', { bubbles: true })); }
+
+      // City
+      const city = document.querySelector('input[name*="city"], input[placeholder*="Ville"], input[placeholder*="résidence"]');
+      if (city && !city.value) { city.value = 'Paris, France'; city.dispatchEvent(new Event('input', { bubbles: true })); }
+
+      // Position/Title
+      const positionInputs = document.querySelectorAll('input[placeholder*="Poste"], input[name*="profession"], input[name*="title"], input[placeholder*="Recherche"]');
+      positionInputs.forEach(inp => {
+        if (!inp.value) {
+          inp.value = prof.title || 'Développeur Full Stack';
+          inp.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
+    }, profile);
 
     let screenshot3 = path.join(screenshotDir, `${applicationId}_step3_info.png`);
     await page.screenshot({ path: screenshot3 }).catch(() => {});
@@ -183,6 +212,17 @@ async function autoApply(job, profile, applicationId) {
     // ── STEP 4: Attach / Verify Candidate Resume (PDF) ──
     const cvName = profile.cvFilename || 'CV_Hamid_Boumela.pdf';
     emitStatus(applicationId, 4, 'attach_cv', 'active', `Attaching candidate resume (${cvName})...`);
+    
+    try {
+      const resumeInput = await page.$('input[type="file"][accept*="pdf"], input[name*="resume"], input[name*="cv"], input[id*="resume"], input[type="file"]');
+      if (resumeInput) {
+        const cvPath = path.join(__dirname, 'CV_Hamid_Boumela.pdf');
+        if (fs.existsSync(cvPath)) {
+          await resumeInput.uploadFile(cvPath);
+        }
+      }
+    } catch (e) {}
+
     await new Promise(r => setTimeout(r, 1200));
 
     let screenshot4 = path.join(screenshotDir, `${applicationId}_step4_cv.png`);
@@ -198,10 +238,11 @@ async function autoApply(job, profile, applicationId) {
       const ta = document.querySelector('textarea[name*="letter"], textarea[name*="motivation"], textarea');
       if (ta) {
         ta.value = letter;
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
         return true;
       }
       return false;
-    }, profile.coverLetter || "Dear Hiring Team, deeply interested in your team and innovative projects, please find my application enclosed.").catch(() => false);
+    }, profile.coverLetter || "Madame, Monsieur,\n\nVivement intéressé par votre opportunité, je souhaite mettre à profit mes compétences en développement logiciel Full Stack au sein de votre équipe.\n\nCordialement,\nFahid El Garouani");
 
     await new Promise(r => setTimeout(r, 1200));
 
@@ -215,7 +256,10 @@ async function autoApply(job, profile, applicationId) {
     emitStatus(applicationId, 6, 'validate_terms', 'active', `Accepting recruiter policy & terms...`);
     await page.evaluate(() => {
       const cbs = document.querySelectorAll('input[type="checkbox"]');
-      cbs.forEach(cb => { cb.checked = true; });
+      cbs.forEach(cb => { 
+        cb.checked = true; 
+        cb.dispatchEvent(new Event('change', { bubbles: true }));
+      });
     }).catch(() => {});
 
     await new Promise(r => setTimeout(r, 1000));
@@ -230,18 +274,23 @@ async function autoApply(job, profile, applicationId) {
     emitStatus(applicationId, 7, 'final_submit', 'active', `Submitting application to ${job.company}...`);
 
     await page.evaluate(() => {
+      // Scroll modal
+      document.querySelectorAll('div, form, section').forEach(el => {
+        if (el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
+      });
+
       const buttons = [...document.querySelectorAll('button')];
-      const submitBtn = buttons.find(b => 
-        b.textContent.toLowerCase().includes('envoyer') ||
-        b.textContent.toLowerCase().includes('soumettre') ||
-        b.textContent.toLowerCase().includes('submit') ||
-        b.textContent.toLowerCase().includes('postuler') ||
-        b.textContent.toLowerCase().includes('apply')
-      );
-      if (submitBtn) submitBtn.click();
+      const submitBtn = buttons.find(b => {
+        const txt = (b.textContent || '').trim().toLowerCase();
+        return txt.includes('envoyer') || txt.includes('soumettre') || txt.includes('valider') || txt.includes('confirmer') || (txt.includes('postuler') && !txt.includes('cette offre'));
+      });
+      if (submitBtn) {
+        submitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        submitBtn.click();
+      }
     }).catch(() => {});
 
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 3000));
 
     let screenshot7 = path.join(screenshotDir, `${applicationId}_step7_done.png`);
     await page.screenshot({ path: screenshot7 }).catch(() => {});

@@ -1,6 +1,0 @@
-2026/08/14-20:20:43.038 a78 Reusing MANIFEST C:\Users\hp\Downloads\New folder (11)\chrome_session\Default\Local Storage\leveldb/MANIFEST-000001
-2026/08/14-20:20:43.047 a78 Recovering log #4
-2026/08/14-20:20:43.051 a78 Reusing old log C:\Users\hp\Downloads\New folder (11)\chrome_session\Default\Local Storage\leveldb/000004.log 
-2026/08/14-20:21:00.530 2d88 Level-0 table #8: started
-2026/08/14-20:21:00.545 2d88 Level-0 table #8: 14822 bytes OK
-2026/08/14-20:21:00.550 2d88 Delete type=0 #4
