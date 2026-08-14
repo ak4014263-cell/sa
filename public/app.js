@@ -2,7 +2,7 @@
    JobSwipe × Welcome to the Jungle — Dual Platform App Logic
    ═══════════════════════════════════════════════════════════ */
 
-const API = 'http://localhost:3000/api';
+const API = '/api';
 
 // ── Application State ──
 let allJobs = [];
