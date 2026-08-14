@@ -35,10 +35,10 @@ app.use(express.static('public'));
 let cachedJobs = [];
 let applications = {}; // applicationId -> { applicationId, job, profile, status, currentStep, steps, latestScreenshot, createdAt }
 let profile = {
-  email: 'daddy202028@gmail.com',
-  wttjPassword: 'JobSwipeDemo2026!',
-  firstName: 'Alexandre',
-  lastName: 'Dubois',
+  email: 'boumelahamid@gmail.com',
+  wttjPassword: 'Pommier78955&&',
+  firstName: 'Hamid',
+  lastName: 'Boumela',
   phone: '+33 6 12 34 56 78',
   linkedin: 'https://linkedin.com/in/alexandre-dubois',
   title: 'Développeur Full Stack Senior',

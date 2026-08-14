@@ -56,22 +56,32 @@ async function autoApply(job, profile, applicationId) {
       });
       await new Promise(r => setTimeout(r, 1500));
 
+      // Dismiss Axeptio Cookie Banner if present
+      try {
+        await page.evaluate(() => {
+          const cookieBtns = [...document.querySelectorAll('button, #axeptio_btn_accept, [id*="axeptio"]')];
+          const acceptBtn = cookieBtns.find(b => b.textContent.toLowerCase().includes('ok') || b.textContent.toLowerCase().includes('accepter'));
+          if (acceptBtn) acceptBtn.click();
+        });
+        await new Promise(r => setTimeout(r, 800));
+      } catch (e) {}
+
       // Fill Email & Password
       const emailInput = await page.$('input[type="email"], input[name="email"]');
       if (emailInput) {
-        await emailInput.type(profile.email || 'daddy202028@gmail.com', { delay: 40 });
+        await emailInput.type(profile.email || 'boumelahamid@gmail.com', { delay: 35 });
       }
 
       const passInput = await page.$('input[type="password"], input[name="password"]');
       if (passInput) {
-        await passInput.type(profile.wttjPassword || 'JobSwipeDemo2026!', { delay: 40 });
+        await passInput.type(profile.wttjPassword || 'Pommier78955&&', { delay: 35 });
       }
 
       // Submit Login
       const submitBtn = await page.$('button[type="submit"], button[class*="_variant-primary"]');
       if (submitBtn) {
         await submitBtn.click();
-        await new Promise(r => setTimeout(r, 3000));
+        await new Promise(r => setTimeout(r, 4000));
       }
     } catch (e) {
       console.log('[AutoApply] Login step notice:', e.message);
